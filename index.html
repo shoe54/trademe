@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Demo</title>
+    <script src="jquery-1.10.2.min.js"></script>
+    <script src="json2.js"></script>
+    <script src="jsrender.min.js"></script>
+
+	<script id="template" type="text/x-jsrender">
+		<div style="float:left">
+			<div><em>Title:</em> <a href="http://www.trademe.co.nz{{:CategoryPath}}/auction-{{:ListingId}}.htm">{{:Title}}</a></div>
+			<div><img src="{{:PictureHref}}"/></div>
+			<div><em>Category:</em> {{:CategoryPath}}</div>
+			<div><em>Current Price:</em> {{:CurrentPrice}}</div>
+			<div><em>Buy Now:</em> {{:BuyNowPrice}}</div>
+			<div><em>Suburb:</em> {{:Suburb}}</div>
+		</div>
+	</script>
+
+	<script>
+	//var categoriesXml;
+	
+    $( document ).ready(function() {
+	    //loadCategories();
+		$('#search').click(function(){
+			search();
+		});
+		search();
+    });
+
+	function loadCategories() {
+		$.ajax({
+			// the URL for the request
+			url: "http://api.trademe.co.nz/v1/Categories.xml",
+			type: "GET",
+			dataType : "xml",
+			success: function( xml ) {
+				categoriesXml = $(xml);
+				search();
+			},
+			// code to run if the request fails; the raw request and
+			// status codes are passed to the function
+			error: function( xhr, status ) {
+				alert( "Sorry, there was a problem!" );
+			}
+		});
+	}
+    function search() {
+		var maxResults = $(":input[name='maxResults']").val();
+		$.ajax({
+			// the URL for the request
+			url: "https://api.trademe.co.nz/v1/Listings/closing.json",
+			// the data to send (will be converted to a query string)
+			data: {
+				buy: "All",
+				condition: "All",
+				pay: "All",
+				photo_size: "Medium",
+				region: 12,
+				rows: maxResults,
+				sort_order: "ExpiryAsc"
+			},
+			type: "GET",
+			dataType : "json",
+			// code to run if the request succeeds;
+			// the response is passed to the function
+			success: function( json ) {
+				//var jsonStr = JSON.stringify(json, undefined, "  ");
+				//console.log(jsonStr);
+				var results = new Array();
+				var resultsCount = 0;
+				$.each(json.List, function(i, node) {
+					//console.log("print");
+					translate(node);
+					if (!filter(node)) {
+						results[resultsCount] = node;
+						resultsCount++;
+					}
+					//$('#results').append('<p>' + JSON.stringify(node, undefined, "  ") + '<p>');  
+				});
+				console.log(JSON.stringify(results, undefined, "  "));
+				var template = $.templates("#template");
+				var htmlOutput = template.render(results);
+				$("#results").html(htmlOutput);
+				console.log("Results outputted");
+			},
+			// code to run if the request fails; the raw request and
+			// status codes are passed to the function
+			error: function( xhr, status ) {
+				alert( "Sorry, there was a problem!" );
+			}
+			// code to run regardless of success or failure
+			/*complete: function( xhr, status ) {
+				alert( "The request is complete!" );
+			}*/
+		});
+	}
+	
+	function translate(listing) {
+		//listing.CategoryTranslated = categoriesXml.find("Number:contains(\"" + listing.Category + "\"):first() ~ Path").text();
+		if (listing.MaxBidAmount)
+			listing.CurrentPrice = listing.MaxBidAmount;
+		else if (listing.StartPrice)
+			listing.CurrentPrice = listing.StartPrice;
+	}
+	
+	function filter(listing) {
+		/* Filter unwanted suburbs
+		 Wellington city, Kapiti, Porirua
+		 */
+		if (listing.Suburb == "Wellington City" || listing.Suburb == "Kapiti" || listing.Suburb == "Porirua")
+			return true;
+			
+		/* Filter current prices that are >= 80% of Buy Now price */
+		if (listing.CurrentPrice && listing.BuyNowPrice) {
+			if (listing.CurrentPrice / listing.BuyNowPrice >= 0.8)
+				return true;
+		}
+		
+		/* Filter listings that have a buy now but no current price */
+		if (!listing.CurrentPrice && listing.BuyNowPrice) {
+			//console.log("Filtering out due to Buy Now only" + JSON.stringify(listing, undefined, "  "));
+			return true;
+		}
+			
+		/* Filter unwanted categories
+		 /Movies-TV/DVDs/  /Movies-TV/Bluray/   /Music-instruments/CDs/
+		 /Jewellery-watches/   /Clothing/Girls/   /Home-living/Kitchen/Cups-glasses/
+		 /Antiques-collectables/Coins/   /Clothing/Womenswear/Swimwear   /Antiques-collectables/Banknotes/
+		 /Crafts/Knitting-Weaving/Patterns   /Sports/Sports-memorabilia/
+		*/
+	    if (listing.Category.match("^0003-0365-") || listing.Category.match("^0003-9232-") || listing.Category.match("^0343-0891-") ||
+		    listing.Category.match("^0246-") || listing.Category.match("^0153-0436-") || listing.Category.match("^0004-0371-3448-") ||
+			listing.Category.match("^0187-4353-") || listing.Category.match("^0153-0439-3141-") || listing.Category.match("^0187-4342-") ||
+			listing.Category.match("^0341-4416-4417-") || listing.Category.match("^0005-3155-"))
+			return true;
+
+		return false;
+	}
+    </script>
+</head>
+<body>
+<div id="searchOptions">
+	Max Results: <input type="text" name="maxResults" value="5000"/>
+	<button id="search" type="button">Search</button>
+</div>
+<div id="results"></div>
+</body>
+</html>
