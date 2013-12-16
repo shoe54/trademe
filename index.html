@@ -109,7 +109,8 @@
 		/* Filter unwanted suburbs
 		 Wellington city, Kapiti, Porirua
 		 */
-		if (listing.Suburb == "Wellington City" || listing.Suburb == "Kapiti" || listing.Suburb == "Porirua")
+		var suburbWgtn = $(":input[name='suburbWgtn']").is(':checked');
+		if ((listing.Suburb == "Wellington City" && !suburbWgtn) || listing.Suburb == "Kapiti" || listing.Suburb == "Porirua")
 			return true;
 			
 		/* Filter current prices that are >= 80% of Buy Now price */
@@ -125,15 +126,17 @@
 		}
 			
 		/* Filter unwanted categories
-		 /Movies-TV/DVDs/  /Movies-TV/Bluray/   /Music-instruments/CDs/
+		 /Movies-TV/DVDs/    /Movies-TV/Bluray/   /Music-instruments/CDs/
 		 /Jewellery-watches/   /Clothing/Girls/   /Home-living/Kitchen/Cups-glasses/
-		 /Antiques-collectables/Coins/   /Clothing/Womenswear/Swimwear   /Antiques-collectables/Banknotes/
-		 /Crafts/Knitting-Weaving/Patterns   /Sports/Sports-memorabilia/
+		 /Antiques-collectables/Coins/   /Antiques-collectables/Banknotes/
+		 /Crafts/Knitting-Weaving/Patterns   /Sports/Sports-memorabilia/   /Clothing/Womenswear/
+		 /Clothing/Boys/   /Baby-gear/Clothing
 		*/
 	    if (listing.Category.match("^0003-0365-") || listing.Category.match("^0003-9232-") || listing.Category.match("^0343-0891-") ||
 		    listing.Category.match("^0246-") || listing.Category.match("^0153-0436-") || listing.Category.match("^0004-0371-3448-") ||
-			listing.Category.match("^0187-4353-") || listing.Category.match("^0153-0439-3141-") || listing.Category.match("^0187-4342-") ||
-			listing.Category.match("^0341-4416-4417-") || listing.Category.match("^0005-3155-"))
+			listing.Category.match("^0187-4353-") || listing.Category.match("^0187-4342-") ||
+			listing.Category.match("^0341-4416-4417-") || listing.Category.match("^0005-3155-") || listing.Category.match("^0153-0439-") ||
+			listing.Category.match("^0153-0435-") || listing.Category.match("^0351-2439-"))
 			return true;
 
 		return false;
@@ -143,6 +146,7 @@
 <body>
 <div id="searchOptions">
 	Max Results: <input type="text" name="maxResults" value="5000"/>
+	<input type="checkbox" name="suburbWgtn" value="1" checked>Wellington City
 	<button id="search" type="button">Search</button>
 </div>
 <div id="results"></div>
