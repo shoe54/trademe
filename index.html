@@ -26,6 +26,12 @@
 		$('#search').click(function(){
 			search();
 		});
+		$('#searchPlus').click(function(){
+			search();
+			var maxResults = parseInt($(":input[name='maxResults']").val());
+			maxResults = maxResults + 1;
+			$(":input[name='maxResults']").val(maxResults);
+		});
 		search();
     });
 
@@ -148,6 +154,7 @@
 	Max Results: <input type="text" name="maxResults" value="5000"/>
 	<input type="checkbox" name="suburbWgtn" value="1" checked>Wellington City
 	<button id="search" type="button">Search</button>
+	<button id="searchPlus" type="button">Search And Increment Max Results (to ensure no caching by Trade Me)</button>
 </div>
 <div id="results"></div>
 </body>
